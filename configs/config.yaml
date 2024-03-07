@@ -1,0 +1,28 @@
+SEED: 42
+
+DATA:
+  PATH_DATA: "../data"
+  PATH_FOLDS: "../data/kfold"
+  PATH_COMPETITION: "train.json"
+  PATH_NICHOLAS: "nicholas_mixtral_87B.json"
+  EXTRA_DATA: 
+    - "NICHOLAS"
+  FOLDS: 4
+
+MODEL:
+  TRAIN:
+    TRAINING_MODEL_PATH: "microsoft/deberta-v3-base"
+    MODEL_SAVE: "deberta"
+    TRAINING_MAX_LENGTH: 1024
+    SAVE_MODELS: false
+    OUTPUT_DIR: "output"
+    BATCH: 8
+    ACCUMULATION: 2
+    WARMUP: 0
+    EPOCHS: 0.5
+    LR: 2e-5
+
+  INFERENCE:
+    STRIDE: 256
+    INFERENCE_MAX_LENGTH: 1024
+    THRESHOLD: 0.9
