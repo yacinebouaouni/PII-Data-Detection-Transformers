@@ -2,7 +2,7 @@ import os
 import numpy as np
 import pandas as pd
 from datasets import Dataset
-from metric.metric import compute_metric_eval
+from metric.metric import compute_metrics_eval
 
 def tokenize_test(example, tokenizer, max_length, stride):
     text = []
