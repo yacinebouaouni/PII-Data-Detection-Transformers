@@ -1,6 +1,6 @@
 import pandas as pd
 
-def compute_confusion_matrix_alpha(pred_df, gt_df,beta=5):
+def compute_confusion_matrix_alpha(pred_df, gt_df):
     """
     Parameters:
     - pred_df (DataFrame): DataFrame containing predicted PII labels.
@@ -55,7 +55,7 @@ def compute_confusion_matrix_beta(predictions_df, groundtruth_df):
             FN += 1  # False negative
 
     # Iterate through each (document, token) pair in predictions
-    for index, row in predictions_df.iterrows():
+    for _, row in predictions_df.iterrows():
         doc = row['document']
         token = row['token']
 
@@ -63,7 +63,7 @@ def compute_confusion_matrix_beta(predictions_df, groundtruth_df):
         if not ((groundtruth_df['document'] == doc) & (groundtruth_df['token'] == token)).any():
             FP += 1  # False positive
 
-    return TP, FP, FN
+    return {"fp":FP, "fn": FN, "tp":TP}
 
 
 def compute_metrics_eval(df_pred, df_gt, beta=5, log=True):

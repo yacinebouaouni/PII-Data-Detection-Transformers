@@ -4,6 +4,7 @@ import pandas as pd
 from datasets import Dataset
 from metric.metric import compute_metrics_eval
 
+
 def tokenize_test(example, tokenizer, max_length, stride):
     text = []
     token_map = []
@@ -36,7 +37,6 @@ def prepare_dataset_test(data, tokenizer, max_length, stride):
     "tokens": [x["tokens"] for x in data],
     "trailing_whitespace": [x["trailing_whitespace"] for x in data],
     "provided_labels": [x["labels"] for x in data],
-
     })
 
     ds = ds.map(tokenize_test, fn_kwargs={"tokenizer": tokenizer, "max_length": max_length, "stride":stride}, num_proc=4)
@@ -194,10 +194,13 @@ def test(trainer, ds_validation, stride, threshold, path_folds, ignored_labels, 
     preds, ds_dict = predict_data(ds_validation, trainer, stride)
     preds_final = get_class_prediction(preds, threshold)
 
-    processed, pairs = get_doc_token_pred_triplets(preds_final, Dataset.from_dict(ds_dict), id2label, ignored_labels)
+    processed, _ = get_doc_token_pred_triplets(preds_final, Dataset.from_dict(ds_dict), id2label, ignored_labels)
 
     df = pd.DataFrame(processed)    
     df_gt = pd.read_csv(os.path.join(path_folds, "fold_"+str(val_id)+".csv"))
+
+    df.to_csv('preds.csv', index=False)
+    df_gt.to_csv('gt.csv', index=False)
 
     precision, recall, f1 = compute_metrics_eval(df, df_gt)
         

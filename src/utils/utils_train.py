@@ -1,5 +1,6 @@
 from datasets import Dataset
 import numpy as np
+from seqeval.metrics import recall_score, precision_score
 
 
 def prepare_dataset(data, tokenizer, all_labels, label2id, id2label, seed, max_length):
