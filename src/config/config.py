@@ -53,4 +53,34 @@ class Config:
             config: Dict[str, Any] = yaml.safe_load(file)
         return config
     
+    def to_dict(self) -> Dict[str, object]:
+        """
+        Returns all attributes of the Config object as a dictionary.
+
+        Returns:
+            dict: Dictionary containing all attributes.
+        """
+        attributes_dict = {
+            "SEED": self.SEED,
+            "PATH_DATA": self.PATH_DATA,
+            "PATH_FOLDS": self.PATH_FOLDS,
+            "PATH_COMPETITION": self.PATH_COMPETITION,
+            "PATH_NICHOLAS": self.PATH_NICHOLAS,
+            "EXTRA_DATA": self.EXTRA_DATA,
+            "FOLDS": self.FOLDS,
+            "TRAINING_MODEL_PATH": self.TRAINING_MODEL_PATH,
+            "MODEL_SAVE": self.MODEL_SAVE,
+            "TRAINING_MAX_LENGTH": self.TRAINING_MAX_LENGTH,
+            "SAVE_MODELS": self.SAVE_MODELS,
+            "OUTPUT_DIR": self.OUTPUT_DIR,
+            "BATCH": self.BATCH,
+            "ACCUMULATION": self.ACCUMULATION,
+            "WARMUP": self.WARMUP,
+            "EPOCHS": self.EPOCHS,
+            "LR": self.LR,
+            "STRIDE": self.STRIDE,
+            "INFERENCE_MAX_LENGTH": self.INFERENCE_MAX_LENGTH,
+            "THRESHOLD": self.THRESHOLD
+        }
+        return attributes_dict
     
