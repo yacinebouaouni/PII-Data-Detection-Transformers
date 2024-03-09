@@ -14,7 +14,7 @@ MODEL:
     TRAINING_MODEL_PATH: "microsoft/deberta-v3-base"
     MODEL_SAVE: "deberta"
     TRAINING_MAX_LENGTH: 1024
-    SAVE_MODELS: true
+    SAVE_MODELS: false
     OUTPUT_DIR: "output"
     BATCH: 12
     ACCUMULATION: 1
