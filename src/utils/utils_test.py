@@ -199,9 +199,6 @@ def test(trainer, ds_validation, stride, threshold, path_folds, ignored_labels, 
     df = pd.DataFrame(processed)    
     df_gt = pd.read_csv(os.path.join(path_folds, "fold_"+str(val_id)+".csv"))
 
-    df.to_csv('preds.csv', index=False)
-    df_gt.to_csv('gt.csv', index=False)
-
     precision, recall, f1 = compute_metrics_eval(df, df_gt)
         
     return precision, recall, f1

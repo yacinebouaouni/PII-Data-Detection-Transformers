@@ -11,7 +11,7 @@ from datetime import datetime
 import statistics 
 
 CONFIG = "../configs/config.yaml"
-
+EXPERIMENTS_PATH = "../experiments-EPOCH-BATCH-ACC"
 
 def train(config):
 
@@ -21,7 +21,7 @@ def train(config):
     current_datetime = datetime.now()
     run_name = current_datetime.strftime("%Y-%m-%d_%H-%M-%S")
     # setup mlflow uri and run
-    mlflow.set_tracking_uri("experiments")
+    mlflow.set_tracking_uri(EXPERIMENTS_PATH)
     mlflow.start_run(run_name=run_name)
     mlflow.log_params(config.to_dict())
     
@@ -101,9 +101,9 @@ def train_(args, val_id, config):
 if __name__=="__main__":
     
     config = get_config(CONFIG)
-    for EPOCHS in [1]:
-        for BATCH in [4]:
-            for ACCUMULATION in [1]:
+    for EPOCHS in [2,3]:
+        for BATCH in [4,6,8]:
+            for ACCUMULATION in [1,2]:
                 config.EPOCHS = EPOCHS
                 config.BATCH  = BATCH
                 config.ACCUMULATION = ACCUMULATION 
