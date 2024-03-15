@@ -12,7 +12,7 @@ def prepare_dataset(data, tokenizer, all_labels, label2id, id2label, seed, max_l
         "provided_labels": [x["labels"] for x in data],
     }).shuffle(seed=seed)
 
-    ds = ds.map(tokenize, fn_kwargs={"tokenizer": tokenizer, "label2id": label2id, "max_length": max_length}, num_proc=8)
+    ds = ds.map(tokenize, fn_kwargs={"tokenizer": tokenizer, "label2id": label2id, "max_length": max_length}, num_proc=4)
     return ds
 
 

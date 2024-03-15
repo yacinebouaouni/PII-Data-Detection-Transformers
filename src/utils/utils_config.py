@@ -35,7 +35,7 @@ def get_trainer_args(config):
             gradient_accumulation_steps=config.ACCUMULATION,
             report_to="none",
             evaluation_strategy="no",
-            save_strategy="no",
+            save_strategy="epoch",
             save_total_limit=1,
             overwrite_output_dir=True,
             lr_scheduler_type='cosine',
