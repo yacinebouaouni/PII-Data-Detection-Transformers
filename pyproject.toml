@@ -1,3 +1,24 @@
 [tool.black]
 line-length = 88
 target-version = ['py311']
+[tool.poetry]
+name = "piidetect"
+version = "0.1.0"
+description = "package to train, validate and test transformer-based models for personal indentifiable data detection"
+authors = ["ybouaouni <yacinebouaouni07@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+datasets = "2.18.0"
+accelerate = "0.27.2"
+transformers = "4.38.2"
+sentencepiece = "0.2.0"
+seqeval = "1.2.2"
+evaluate = "0.4.1"
+mlflow = "2.11"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
