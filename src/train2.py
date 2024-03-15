@@ -4,7 +4,6 @@ from transformers import (
     DataCollatorForTokenClassification,
 )
 
-from data import DatasetPII
 from utils.utils_data import (
     get_full_data,
     load_train_splits,
@@ -22,7 +21,7 @@ import statistics
 import gc
 
 CONFIG = "../configs/config.yaml"
-EXPERIMENTS_PATH = "../experiments-MPWARE-NO-IUSERNAME-DEBERTA-LARGE"
+EXPERIMENTS_PATH = "../experiments-MPWARE-NO-IUSERNAME"
 
 
 def train(config):
@@ -131,26 +130,24 @@ def train_(args, val_id, config):
 NameToPath = {
     "NICHOLAS": "nicholas_mixtral_87B.json",
     "MPWARE-NO-I-USERNAME": "mpware_mixtral8x7b_v1.1-no-i-username.json",
+    "MPWARE-WITH-I-USERNAME": "mpware_mixtral8x7b_v1.1.json",
 }
 
 if __name__ == "__main__":
     config = get_config(CONFIG)
-    config.TRAINING_MODEL_PATH = "microsoft/deberta-v3-large"
-    config.EXTRA_DATA = ["MPWARE-NO-I-USERNAME"]
-    config.PATH_EXTRA_DATA = []
+    config.EXTRA_DATA = "MPWARE-NO-I-USERNAME"
+    config.PATH_EXTRA_DATA = NameToPath[config.EXTRA_DATA]
 
-    for extra_data_name in config.EXTRA_DATA:
-        config.PATH_EXTRA_DATA.append(NameToPath[extra_data_name])
-
-    print(config.PATH_EXTRA_DATA)
-    for EPOCH in [3]:
+    for EPOCH in [2, 3]:
         for BATCH in [4]:
-            for THRESHOLD in [0.99]:
-                config.EPOCHS = EPOCH
-                config.BATCH = BATCH
-                config.THRESHOLD = THRESHOLD
+            for ACCUMULATION in [1, 2]:
+                for THRESHOLD in [0.9, 0.95, 0.99]:
+                    config.EPOCHS = EPOCH
+                    config.BATCH = BATCH
+                    config.ACCUMULATION = ACCUMULATION
+                    config.THRESHOLD = THRESHOLD
 
-                print(
-                    f"Training for Epochs = {config.EPOCHS}, BATCH={config.BATCH}, ACCUMULATION={config.ACCUMULATION}, THRESHOLD = {config.THRESHOLD}"
-                )
-                train(config)
+                    print(
+                        f"Training for Epochs = {config.EPOCHS}, BATCH={config.BATCH}, ACCUMULATION={config.ACCUMULATION}, THRESHOLD = {config.THRESHOLD}"
+                    )
+                    train(config)
