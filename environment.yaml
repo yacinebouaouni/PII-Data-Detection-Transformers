@@ -1,0 +1,10 @@
+name: piidetect
+
+channels:
+  - conda-forge
+
+dependencies:
+  - python=3.11.*
+  - pre-commit=3.6.2
+  - pip=24.*
+  - poetry=1.8.*
