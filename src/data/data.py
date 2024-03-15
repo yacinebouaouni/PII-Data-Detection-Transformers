@@ -6,9 +6,11 @@ A module for managing PII (Personally Identifiable Information) datasets.
 Classes:
     DatasetPII: A class for managing PII datasets.
 """
+
 import os
 import json
 from itertools import chain
+
 
 class DatasetPII:
     """
@@ -36,7 +38,11 @@ class DatasetPII:
         self.path_data = config.PATH_DATA
         self.extra_data = config.EXTRA_DATA
 
-        self.all_labels, self.label2id, self.id2label = self._get_label_mapping()
+        (
+            self.all_labels,
+            self.label2id,
+            self.id2label,
+        ) = self._get_label_mapping()
 
         if cross_val:
             self.path_folds = config.PATH_FOLDS
@@ -48,12 +54,18 @@ class DatasetPII:
         Returns:
             list: List containing the training data.
         """
-        if  self.__cross_val:
+        if self.__cross_val:
             raise ValueError("load_train_data method can be used with cross_val=False.")
-        with open(os.path.join(self.path_data, "train.json"), "r", encoding='utf-8') as file:
+        with open(
+            os.path.join(self.path_data, "train.json"), "r", encoding="utf-8"
+        ) as file:
             data = json.load(file)
         if self.extra_data:
-            with open(os.path.join(self.path_data, "external_datasets.json"), "r", encoding='utf-8') as file:
+            with open(
+                os.path.join(self.path_data, "external_datasets.json"),
+                "r",
+                encoding="utf-8",
+            ) as file:
                 extra_data = json.load(file)
             for external_dataset in self.extra_data:
                 data += extra_data[external_dataset]
@@ -70,16 +82,26 @@ class DatasetPII:
             list: List containing the training data.
         """
         if not self.__cross_val:
-            raise ValueError("load_train_splits method can be used with cross_val=True.")
+            raise ValueError(
+                "load_train_splits method can be used with cross_val=True."
+            )
         folds = os.listdir(self.path_folds)
-        folds = [fold for fold in folds if fold.endswith('json')]
-        train_folds = [fold for fold in folds if fold != "fold_" + str(val_id) + ".json"]
+        folds = [fold for fold in folds if fold.endswith("json")]
+        train_folds = [
+            fold for fold in folds if fold != "fold_" + str(val_id) + ".json"
+        ]
         data = []
         for fold in train_folds:
-            with open(os.path.join(self.path_folds, fold), "r", encoding="utf-8") as file:
+            with open(
+                os.path.join(self.path_folds, fold), "r", encoding="utf-8"
+            ) as file:
                 data += json.load(file)
             if self.extra_data:
-                with open(os.path.join(self.path_data, "external_datasets.json"), "r", encoding='utf-8') as file:
+                with open(
+                    os.path.join(self.path_data, "external_datasets.json"),
+                    "r",
+                    encoding="utf-8",
+                ) as file:
                     extra_data = json.load(file)
                 for external_dataset in self.extra_data:
                     data += extra_data[external_dataset]
@@ -97,9 +119,11 @@ class DatasetPII:
             list: List containing the validation data.
         """
         if not self.__cross_val:
-            raise ValueError("load_validation_split method can be used with cross_val=True.")
+            raise ValueError(
+                "load_validation_split method can be used with cross_val=True."
+            )
         fold = "fold_" + str(val_id) + ".json"
-        with open(os.path.join(self.path_folds, fold),"r", encoding='utf-8') as file:
+        with open(os.path.join(self.path_folds, fold), "r", encoding="utf-8") as file:
             data = json.load(file)
         return data
 
@@ -110,7 +134,9 @@ class DatasetPII:
         Returns:
             list: List containing the full dataset.
         """
-        with open(os.path.join(self.path_data, "train.json"), "r", encoding='utf-8') as file:
+        with open(
+            os.path.join(self.path_data, "train.json"), "r", encoding="utf-8"
+        ) as file:
             data = json.load(file)
         return data
 
