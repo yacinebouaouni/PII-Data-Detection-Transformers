@@ -107,15 +107,15 @@ class DatasetPII:
                 os.path.join(self.path_folds, fold), "r", encoding="utf-8"
             ) as file:
                 data += json.load(file)
-            if self.extra_data:
-                with open(
-                    os.path.join(self.path_data, "external_datasets.json"),
-                    "r",
-                    encoding="utf-8",
-                ) as file:
-                    extra_data = json.load(file)
-                for external_dataset in self.extra_data:
-                    data += extra_data[external_dataset]
+        if self.extra_data:
+            with open(
+                os.path.join(self.path_data, "external_datasets.json"),
+                "r",
+                encoding="utf-8",
+            ) as file:
+                extra_data = json.load(file)
+            for external_dataset in self.extra_data:
+                data += extra_data[external_dataset]
         return data
 
     def load_validation_split(self, val_id):
