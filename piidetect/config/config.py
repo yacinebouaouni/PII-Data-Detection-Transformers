@@ -50,6 +50,10 @@ class Config:
         self.THRESHOLD: float = (
             self.config.get("MODEL").get("INFERENCE").get("THRESHOLD")
         )
+        self.PATH_PREDICTIONS = (
+            self.config.get("MODEL").get("INFERENCE").get("PATH_PREDICTIONS")
+        )
+        self.DROPOUT: float = self.config.get("MODEL").get("TRAIN").get("DROPOUT")
 
     def load_config(self, path: str) -> Dict[str, Any]:
         """
