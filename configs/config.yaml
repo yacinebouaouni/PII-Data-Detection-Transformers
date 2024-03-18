@@ -19,7 +19,7 @@ MODEL:
     BATCH: 4
     ACCUMULATION: 1
     WARMUP: 0
-    EPOCHS: 2
+    EPOCHS: 0.1
     LR: 0.00002
     DROPOUT: 0.1
 
