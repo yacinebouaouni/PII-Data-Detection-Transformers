@@ -2,7 +2,7 @@ import os
 import numpy as np
 import pandas as pd
 from datasets import Dataset
-from metric.metric import compute_metrics_eval
+from metric import Evaluator
 
 
 def tokenize_test(example, tokenizer, max_length, stride):
@@ -227,6 +227,7 @@ def test(
     ignored_labels,
     id2label,
     val_id,
+    path_save=None,
 ):
     preds, ds_dict = predict_data(ds_validation, trainer, stride)
     preds_final = get_class_prediction(preds, threshold)
@@ -238,8 +239,10 @@ def test(
     df = pd.DataFrame(processed)
     df_gt = pd.read_csv(os.path.join(path_folds, "fold_" + str(val_id) + ".csv"))
 
-    precision, recall, f1 = compute_metrics_eval(df, df_gt)
+    precision, recall, f1 = Evaluator.compute_metrics_eval(df, df_gt)
 
+    if path_save:
+        df.to_csv(path_save)
     return precision, recall, f1
 
 

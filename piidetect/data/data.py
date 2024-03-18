@@ -32,7 +32,7 @@ class DatasetPII:
         path_folds (str): Path to the directory containing cross-validation folds.
     """
 
-    def __init__(self, cross_val=False, config=None):
+    def __init__(self, cross_val=False, validation=False, config=None):
         self.__cross_val = cross_val
         self.config = config
         self.path_data = config.PATH_DATA
@@ -47,6 +47,14 @@ class DatasetPII:
         if cross_val:
             self.path_folds = config.PATH_FOLDS
 
+        if validation:
+            self.train_data_path = os.path.join(self.path_data, "holdout", "train.json")
+            self.validation_data_path = os.path.join(
+                self.path_data, "holdout", "validation.json"
+            )
+        else:
+            self.train_data_path = os.path.join(self.path_data, "train.json")
+
     def load_train_data(self):
         """
         Load the training data from the main dataset and any additional datasets.
@@ -56,9 +64,7 @@ class DatasetPII:
         """
         if self.__cross_val:
             raise ValueError("load_train_data method can be used with cross_val=False.")
-        with open(
-            os.path.join(self.path_data, "train.json"), "r", encoding="utf-8"
-        ) as file:
+        with open(self.train_data_path, "r", encoding="utf-8") as file:
             data = json.load(file)
         if self.extra_data:
             with open(
@@ -69,6 +75,11 @@ class DatasetPII:
                 extra_data = json.load(file)
             for external_dataset in self.extra_data:
                 data += extra_data[external_dataset]
+        return data
+
+    def load_validation_data(self):
+        with open(self.validation_data_path, "r", encoding="utf-8") as file:
+            data = json.load(file)
         return data
 
     def load_train_splits(self, val_id):
