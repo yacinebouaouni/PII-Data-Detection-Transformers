@@ -98,5 +98,6 @@ class Config:
             "STRIDE": self.STRIDE,
             "INFERENCE_MAX_LENGTH": self.INFERENCE_MAX_LENGTH,
             "THRESHOLD": self.THRESHOLD,
+            "DROPOUT": self.DROPOUT,
         }
         return attributes_dict

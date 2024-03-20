@@ -2,9 +2,15 @@
 cross_validation.py - Script for cross-validation for PII detection using transformers.
 
 This script trains a token classification model for detecting personally identifiable information (PII)
-in text using the transformers library.
+in text using the transformers library. It performs cross-validation with the specified threshold value for evaluation.
+
+Usage: python cross_validation.py --threshold <threshold_value>
+
+Args:
+    --threshold (float): Threshold value used for evaluation of the trained model.
 
 """
+
 
 import os
 import sys
@@ -120,6 +126,8 @@ def train_(args, val_id, config):
         label2id=label2id,
         ignore_mismatched_sizes=True,
     )
+
+    model.dropout.p = config.DROPOUT
 
     trainer = Trainer(
         model=model,
