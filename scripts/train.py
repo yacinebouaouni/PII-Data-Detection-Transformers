@@ -1,5 +1,11 @@
 """Module for training a token classification model."""
 
+import sys
+import os
+
+sys.path.append(
+    os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "piidetect"))
+)
 from transformers import AutoTokenizer, Trainer
 from transformers import (
     AutoModelForTokenClassification,
@@ -9,6 +15,7 @@ from transformers import (
 from data import DatasetPII
 from utils.utils_train import prepare_dataset
 from utils.utils_config import get_config, set_random_seeds, get_trainer_args
+import argparse
 
 CONFIG = "../configs/config.yaml"
 
@@ -75,19 +82,42 @@ def train(config):
 
     print("saving model")
     if config.SAVE_MODELS:
-        trainer.save_model("deberta-v3-large-mpware-3epochs")
-        tokenizer.save_pretrained("deberta-v3-large-mpware-3epochs")
+        trainer.save_model(config.PATH_SAVE)
+        tokenizer.save_pretrained(config.PATH_SAVE)
+
+
+def parse_arguments():
+    parser = argparse.ArgumentParser(
+        description="Train the model with custom configurations"
+    )
+    parser.add_argument(
+        "--epochs", type=int, default=2, help="Number of training epochs"
+    )
+    parser.add_argument("--batch", type=int, required=True, help="Batch size")
+    parser.add_argument(
+        "--accumulation", type=int, required=True, help="Gradient accumulation steps"
+    )
+    parser.add_argument("--lr", type=float, required=True, help="Learning rate")
+
+    args = parser.parse_args()
+    return args
 
 
 if __name__ == "__main__":
+    args = parse_arguments()
     config = get_config(CONFIG)
     config.TRAINING_MODEL_PATH = "microsoft/deberta-v3-large"
-    config.EXTRA_DATA = ["mpware"]
     config.SAVE_MODELS = True
-    config.EPOCHS = 3
-    config.BATCH = 4
 
-    print(
-        f"Training for Epochs = {config.EPOCHS}, BATCH={config.BATCH}, ACCUMULATION={config.ACCUMULATION}, DATA = {config.EXTRA_DATA}"
-    )
+    config.EPOCHS = args.epochs
+    config.BATCH = args.batch
+    config.ACCUMULATION = args.accumulation
+    config.LR = args.lr
+
+    config.WARMUP = 0.1
+    N_GPU = 2
+    dataset_name = "nicholas"  # ['tonyarobertson', 'mpware', 'nicholas', 'moth', 'pjmathematician']
+    config.EXTRA_DATA = [dataset_name]
+    config.PATH_SAVE = f"../models/deberta_large_{dataset_name}_{config.EPOCHS}_{config.BATCH*N_GPU}_{config.ACCUMULATION}_{config.LR}"
+    print(f"Dataset = {config.EXTRA_DATA}, Model = {config.PATH_SAVE}")
     train(config)

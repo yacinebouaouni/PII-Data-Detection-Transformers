@@ -54,6 +54,9 @@ class Config:
             self.config.get("MODEL").get("INFERENCE").get("PATH_PREDICTIONS")
         )
         self.DROPOUT: float = self.config.get("MODEL").get("TRAIN").get("DROPOUT")
+        self.EVAL_STRATEGY: str = (
+            self.config.get("MODEL").get("TRAIN").get("EVAL_STRATEGY")
+        )
 
     def load_config(self, path: str) -> Dict[str, Any]:
         """
@@ -99,5 +102,6 @@ class Config:
             "INFERENCE_MAX_LENGTH": self.INFERENCE_MAX_LENGTH,
             "THRESHOLD": self.THRESHOLD,
             "DROPOUT": self.DROPOUT,
+            "EVAL_STRATEGY": self.EVAL_STRATEGY,
         }
         return attributes_dict

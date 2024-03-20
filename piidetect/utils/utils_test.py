@@ -2,7 +2,7 @@ import os
 import numpy as np
 import pandas as pd
 from datasets import Dataset
-from metric import Evaluator
+from metric import Evaluator, compute_metrics
 
 
 def tokenize_test(example, tokenizer, max_length, stride):
@@ -239,113 +239,8 @@ def test(
     df = pd.DataFrame(processed)
     df_gt = pd.read_csv(os.path.join(path_folds, "fold_" + str(val_id) + ".csv"))
 
-    precision, recall, f1 = Evaluator.compute_metrics_eval(df, df_gt)
+    results = compute_metrics(df, df_gt)
 
     if path_save:
         df.to_csv(path_save)
-    return precision, recall, f1
-
-
-######################################################################################
-
-
-def backwards_map_preds_mean(sub_predictions, stride):
-    max_len = len(sub_predictions)
-
-    if (
-        max_len != 1
-    ):  # nothing to map backwards if sequence is too short to be split in the first place
-        new_predictions = []
-        for i, sub_prediction in enumerate(sub_predictions):
-            if i == 0:
-                new_sub_prediction = sub_prediction[:, :-1, :]
-            elif i == max_len - 1:
-                # End sequence needs to CLS token + Stride tokens
-                new_sub_prediction = sub_prediction[
-                    :, 1:, :
-                ]  # CLS tokens + Stride tokens
-            else:
-                # Middle sequence needs to CLS token + Stride tokens + SEP token
-                sub_prediction = sub_prediction[:, 1:-1, :]
-                prev_stride = sub_predictions[i - 1][:, -stride:, :]
-                curr_stride = sub_predictions[i][:, :stride, :]
-                avg_stride = (prev_stride + curr_stride) / 2
-                new_predictions[-1][:, -stride:, :] = avg_stride
-                new_sub_prediction = sub_prediction[:, stride:, :]
-
-            new_predictions.append(new_sub_prediction)
-
-    return new_predictions if max_len != 1 else sub_predictions
-
-
-def predict_data_mean(ds, trainer, stride):
-    """
-    Process the given dataset by making predictions for each split and re-assembling the results.
-
-    Args:
-        - ds: The hugging face dataset to be processed.
-        - trainer: The model or trainer used for predictions.
-
-    Returns:
-        - preds (list): A list of predictions for each token and for each class
-        - ds_dict (dict): A dictionary containing processed dataset information including document, tokens, token map, and offset mapping.
-    """
-
-    preds = []
-    ds_dict = {"document": [], "token_map": [], "offset_mapping": [], "tokens": []}
-
-    for row in ds:
-        row_preds = []
-        row_offset = []
-
-        splits_preds = []
-        for i, y in enumerate(row["offset_mapping"]):
-            x = Dataset.from_dict(
-                {
-                    "token_type_ids": [row["token_type_ids"][i]],
-                    "input_ids": [row["input_ids"][i]],
-                    "attention_mask": [row["attention_mask"][i]],
-                    "offset_mapping": [row["offset_mapping"][i]],
-                }
-            )
-            pred = trainer.predict(x).predictions
-            splits_preds.append(pred)
-            row_offset += backwards_map_(y, len(row["offset_mapping"]), i, stride)
-
-        splits_preds = backwards_map_preds_mean(splits_preds, stride)
-        for split_pred in splits_preds:
-            row_preds.append(split_pred)
-
-        ds_dict["document"].append(row["document"])
-        ds_dict["tokens"].append(row["tokens"])
-        ds_dict["token_map"].append(row["token_map"])
-        ds_dict["offset_mapping"].append(row_offset)
-        p_concat = np.concatenate(row_preds, axis=1)
-        preds.append(p_concat)
-
-    return preds, ds_dict
-
-
-def test_mean(
-    trainer,
-    ds_validation,
-    stride,
-    threshold,
-    path_folds,
-    ignored_labels,
-    id2label,
-    val_id,
-):
-    preds, ds_dict = predict_data_mean(ds_validation, trainer, stride)
-    preds_final = get_class_prediction(preds, threshold)
-
-    processed, _ = get_doc_token_pred_triplets(
-        preds_final, Dataset.from_dict(ds_dict), id2label, ignored_labels
-    )
-
-    df = pd.DataFrame(processed)
-    df_gt = pd.read_csv(os.path.join(path_folds, "fold_" + str(val_id) + ".csv"))
-
-    precision, recall, f1 = compute_metrics_eval(df, df_gt)
-
-    return precision, recall, f1
+    return results

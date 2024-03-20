@@ -23,17 +23,21 @@ sys.path.append(
     os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "piidetect"))
 )
 
+
 import mlflow
 from piidetect.data import DatasetPII
 from piidetect.utils.utils_config import get_config, get_trainer_args, set_random_seeds
 from piidetect.utils.utils_test import prepare_dataset_test, test
-from piidetect.utils.utils_train import prepare_dataset
+from piidetect.utils.utils_train import prepare_dataset, compute_metrics
 from transformers import (
     AutoModelForTokenClassification,
     AutoTokenizer,
     DataCollatorForTokenClassification,
     Trainer,
 )
+
+from functools import partial
+
 
 CONFIG = "../configs/config.yaml"
 EXPERIMENTS_PATH = "experiments-deberta-base-datasets"
@@ -89,8 +93,8 @@ def train_(args, val_id, config):
     """
 
     dataset = DatasetPII(cross_val=True, config=config)
-    train_data = dataset.load_train_splits(val_id)
-    validation_data = dataset.load_validation_split(val_id)
+    train_data = dataset.load_train_splits(val_id)[:3000]
+    validation_data = dataset.load_validation_split(val_id)[:500]
 
     all_labels, label2id, id2label = (
         dataset.all_labels,
@@ -132,24 +136,13 @@ def train_(args, val_id, config):
         model=model,
         args=args,
         train_dataset=ds,
+        eval_dataset=ds_validation,
         data_collator=collator,
         tokenizer=tokenizer,
+        compute_metrics=partial(compute_metrics, all_labels=all_labels),
     )
 
     trainer.train()
-
-    # evaluate model on spacy
-    ignored_labels = "O"
-    results = test(
-        trainer,
-        ds_validation,
-        config.STRIDE,
-        config.THRESHOLD,
-        config.PATH_FOLDS,
-        ignored_labels,
-        id2label,
-        val_id,
-    )
 
     # Delete the model and tokenizer objects
     del trainer
@@ -157,45 +150,20 @@ def train_(args, val_id, config):
 
     # Call the garbage collector to free memory
     gc.collect()
-    return {
-        "precision": results["precision"],
-        "recall": results["recall"],
-        "f1": results["f5"],
-        "score_per_entity": results["score_per_entity"],
-    }
-
-
-def get_arguments():
-    """
-    Parse command line arguments.
-
-    Returns:
-        argparse.Namespace: Parsed arguments.
-    """
-    parser = argparse.ArgumentParser(description="Get threshold value.")
-    parser.add_argument(
-        "--threshold", type=float, required=True, help="Threshold value."
-    )
-    parser.add_argument("--stride", type=int, required=True, help="stride value.")
-    args = parser.parse_args()
-    return args
+    return {"precision": precision, "recall": recall, "f1": f1}
 
 
 if __name__ == "__main__":
-    args = get_arguments()
-    config = get_config(CONFIG)
-
-    config.THRESHOLD = args.threshold
-    config.STRIDE = args.stride
-    config.WARMUP = 0.1
-    # datasets = ["tonyarobertson", "mpware", "nicholas", "moth", "pjmathematician"]
+    datasets = ["tonyarobertson", "mpware", "nicholas", "moth", "pjmathematician"]
     datasets = ["nicholas"]
+    config = get_config(CONFIG)
     config.TRAINING_MODEL_PATH = "microsoft/deberta-v3-base"
+
     for dataset in datasets:
-        for BATCH in [4, 6, 8]:
-            for LR in [1e-5, 2e-5, 2.5e-5]:
+        for BATCH in [4, 6]:
+            for DROPOUT in [0.15, 0.1]:
                 config.EXTRA_DATA = [dataset]
                 config.BATCH = BATCH
-                config.LR = LR
+                config.DROPOUT = DROPOUT
 
                 train(config)
