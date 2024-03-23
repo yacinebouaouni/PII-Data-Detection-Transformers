@@ -3,6 +3,7 @@ import numpy as np
 import pandas as pd
 from datasets import Dataset
 from metric import Evaluator, compute_metrics
+import torch
 
 
 def tokenize_test(example, tokenizer, max_length, stride):
@@ -83,7 +84,7 @@ def backwards_map_(row_attribute, max_len, i, stride):
     return row_attribute
 
 
-def predict_data(ds, trainer, stride):
+def predict_data(ds, trainer, stride, ddp=False):
     """
     Process the given dataset by making predictions for each split and re-assembling the results.
 
@@ -112,7 +113,65 @@ def predict_data(ds, trainer, stride):
                     "offset_mapping": [row["offset_mapping"][i]],
                 }
             )
-            pred = trainer.predict(x).predictions
+            if ddp:
+                print(x["input_ids"])
+                pred = trainer(
+                    input_ids=x["input_ids"], attention_mask=x["attention_mask"]
+                )
+            else:
+                pred = trainer.predict(x).predictions
+            row_preds.append(
+                backwards_map_preds(pred, len(row["offset_mapping"]), i, stride)
+            )
+            row_offset += backwards_map_(y, len(row["offset_mapping"]), i, stride)
+
+        ds_dict["document"].append(row["document"])
+        ds_dict["tokens"].append(row["tokens"])
+        ds_dict["token_map"].append(row["token_map"])
+        ds_dict["offset_mapping"].append(row_offset)
+
+        p_concat = np.concatenate(row_preds, axis=1)
+        preds.append(p_concat)
+
+    return preds, ds_dict
+
+
+def predict_data_beta(ds, model, stride, device):
+    """
+    Process the given dataset by making predictions for each split and re-assembling the results.
+
+    Args:
+        - ds: The hugging face dataset to be processed.
+        - trainer: The model or trainer used for predictions.
+
+    Returns:
+        - preds (list): A list of predictions for each token and for each class
+        - ds_dict (dict): A dictionary containing processed dataset information including document, tokens, token map, and offset mapping.
+    """
+
+    preds = []
+    ds_dict = {"document": [], "token_map": [], "offset_mapping": [], "tokens": []}
+    model.to("cuda:0")
+
+    for row in ds:
+        row_preds = []
+        row_offset = []
+
+        for i, y in enumerate(row["offset_mapping"]):
+            input_ids = torch.tensor([row["input_ids"][i]]).to("cuda:0")
+            attention_mask = torch.tensor([row["attention_mask"][i]]).to("cuda:0")
+            token_type_ids = torch.tensor([row["token_type_ids"][i]]).to("cuda:0")
+            pred = (
+                model(
+                    input_ids=input_ids,
+                    attention_mask=attention_mask,
+                    token_type_ids=token_type_ids,
+                )
+                .logits.cpu()
+                .detach()
+                .numpy()
+            )
+
             row_preds.append(
                 backwards_map_preds(pred, len(row["offset_mapping"]), i, stride)
             )
@@ -229,7 +288,7 @@ def test(
     val_id,
     path_save=None,
 ):
-    preds, ds_dict = predict_data(ds_validation, trainer, stride)
+    preds, ds_dict = predict_data(ds_validation, trainer, stride, ddp)
     preds_final = get_class_prediction(preds, threshold)
 
     processed, _ = get_doc_token_pred_triplets(
@@ -243,4 +302,29 @@ def test(
 
     if path_save:
         df.to_csv(path_save)
+    return results
+
+
+def test_beta(
+    trainer,
+    ds_validation,
+    stride,
+    threshold,
+    path_folds,
+    ignored_labels,
+    id2label,
+    val_id,
+    device=None,
+):
+    preds, ds_dict = predict_data_beta(ds_validation, trainer, stride, device)
+    preds_final = get_class_prediction(preds, threshold)
+
+    processed, _ = get_doc_token_pred_triplets(
+        preds_final, Dataset.from_dict(ds_dict), id2label, ignored_labels
+    )
+
+    df = pd.DataFrame(processed)
+    df_gt = pd.read_csv(os.path.join(path_folds, "fold_" + str(val_id) + ".csv"))
+
+    results = compute_metrics(df, df_gt)
     return results
